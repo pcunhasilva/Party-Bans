@@ -9,7 +9,7 @@ library(readxl)
 library(foreign)
 library(readstata13)
 library(stringi)
-library(pglm)
+library(plm)
 
 # Set Directory:
 wd <- "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
@@ -202,9 +202,6 @@ dataFinal <- merge(x = dataFinal,
 ########## Clean and save data  ###########
 ###########################################
 
-# Keep only complete cases
-#dataFinal <- dataFinal[complete.cases(dataFinal),]
-
 # Remove observations before 1960
 dataFinal <- subset(dataFinal, subset = year>1959)
 
@@ -212,9 +209,20 @@ dataFinal <- subset(dataFinal, subset = year>1959)
 write.csv(dataFinal, file = "Analysis Files/dataFinal.csv")
 
 
+###############################
+########## Analysis ###########
+###############################
 
+# Keep only complete cases
+dataFinal <- dataFinal[complete.cases(dataFinal),]
 
-#####
-#pglm(pat ~ lag(logr, 0:5) + scisect + logk + factor(year), PatsRD,
- #    family = negbin, model = "within", print.level=3, method="nr",
-  #   index=c('cusip', 'year'))
+# OLS with attacks
+summary(plm(n_attacks ~ banall + polity2 + factor(lelecsystem) + 
+               log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
+            data = dataFinal, index=c("scode", "year"),  model="within"))
+# Ethnic has unit root.
+
+# OLS with attacks
+summary(plm(civtot ~ banall + polity2 + factor(lelecsystem) + 
+               log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
+            data = dataFinal, index=c("scode", "year"),  model="within"))
