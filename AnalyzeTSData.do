@@ -7,7 +7,7 @@ cd "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/
 import delimited "dataFinal.csv", colrange(2) clear
  
 * Convert strings to numeric and deal with NA's
-foreach i of varlist  year cow_code country_id partybaniep party_banvd oilhm pophm polity2 ccode ccodealp code_wb banethnic banrelig bansys banall govstruct elecsystem unitary prsystem country cname ethfrac country_abb civviol civtot ethviol n_attacks {
+foreach i of varlist oilhm civviol civtot ethviol ethfrac fd_n_attacks lnoilcap polity2 lnpop{
 	 destring `i', replace force 
 	} 
 	
@@ -15,30 +15,20 @@ foreach i of varlist  year cow_code country_id partybaniep party_banvd oilhm pop
 duplicates tag cow_code year, gen(isdup)
 drop if isdup==1
 
-* Generate ln(Oil capita)
-gen lnoilcap = ln(oilhm/pophm + 1)
-
-* Generate ln(pop)
-gen lnpop = ln(pop)
-
-* Interpolate Ethnic Frag
-by cow_code, sort: ipolate ethfrac year, gen(ethfracNew) 
-
 
 * Difference of Means
-ttest civtot, by(partybaniep) 
-ttest civtot, by(party_banvd) 
-ttest n_attacks, by(partybaniep) 
-ttest n_attacks, by(party_banvd) 
+ttest d_civtot, by(partybaniep) 
+ttest d_civtot, by(party_banvd) 
+ttest fd_n_attacks, by(partybaniep) 
+ttest fd_n_attacks, by(party_banvd) 
 
 
 * Set TSCS 
 tsset cow_code year
 
 * Unit Root Tests
-xtfisher civtot, lags(2) 
-xtfisher n_attacks, lags(2) 
-xtfisher polity2, lags(2)
+xtfisher d_civtot, lags(2) 
+xtfisher fd_n_attacks, lags(2) 
 xtfisher n_attacks, lags(2)
 xtfisher lnoilcap, lags(2) // Has unit root.
 xtfisher ethfrac, lags(2) // Has unit root.
@@ -49,134 +39,106 @@ xtserial n_attacks banall polity2 prsystem lnoilcap lnpop, output
 xtserial civtot party_banvd polity2 prsystem lnoilcap lnpop, output
 xtserial n_attacks party_banvd polity2 prsystem lnoilcap lnpop, output
 
-**************************************
-****** Negative Binomial Models ******
-**************************************
-
-* Models with civtot (No Controls):
-xtnbreg civtot L.partybaniep, fe //Increases violence
-xtnbreg civtot L.party_banvd, fe //Increases violence
-
-* Models with civtot (With Political Controls):
-xtnbreg civtot L.partybaniep polity2 unitary prsystem, fe
-xtnbreg civtot L.party_banvd polity2 unitary prsystem, fe
-
-* Models with civtot (With Political and Economic Controls):
-xtnbreg civtot L.partybaniep polity2 unitary prsystem D.lnoilcap, fe
-xtnbreg civtot L.party_banvd polity2 unitary prsystem D.lnoilcap, fe
-
-* Models with civtot (With Political, Economic, and Demographic Controls):
-xtnbreg civtot L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop, fe
-xtnbreg civtot L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop, fe
-
-xtnbreg civtot L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac , fe
-xtnbreg civtot L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac , fe
 
 
-* Models with civtot (No Controls):
-xtnbreg n_attacks L.partybaniep, fe //Increases violence
-xtnbreg n_attacks L.party_banvd, fe //Increases violence
+***************************************************************************
+**************************** First Difference *****************************
+***************************************************************************
 
-* Models with civtot (With Political Controls):
-xtnbreg n_attacks L.partybaniep polity2 unitary prsystem, fe
-xtnbreg n_attacks L.party_banvd polity2 unitary prsystem, fe
-
-* Models with civtot (With Political and Economic Controls):
-xtnbreg n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap, fe
-xtnbreg n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap, fe
-
-* Models with civtot (With Political, Economic, and Demographic Controls):
-xtnbreg n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop, fe
-xtnbreg n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop, fe
-
-xtnbreg n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac , fe
-xtnbreg n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac , fe
-
+* Mark no missing data
+mark nomiss 
+markout nomiss n_attacks fd_n_attacks partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac
 
 
 *******************************
 ****** Painel Correct SE ******
 *******************************
 
-* Models with civtot (No Controls):
-xtpcse civtot L.partybaniep,  pairwise correlation(ar1) 
-xtpcse civtot L.party_banvd,  pairwise correlation(ar1) 
+* Models with fd_n_attacks (No Controls):
+xtpcse fd_n_attacks L.partybaniep if nomiss==1,  pairwise correlation(ar1) 
+xtpcse fd_n_attacks L.party_banvd if nomiss==1,  pairwise correlation(ar1) 
 
-* Models with civtot (With Political Controls):
-xtpcse civtot L.partybaniep polity2 unitary prsystem,  pairwise correlation(ar1)
-xtpcse civtot L.party_banvd polity2 unitary prsystem,  pairwise correlation(ar1)
+* Models with fd_n_attacks (With Political Controls):
+xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem if nomiss==1,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem if nomiss==1,  pairwise correlation(ar1)
 
-* Models with civtot (With Political and Economic Controls):
-xtpcse civtot L.partybaniep polity2 unitary prsystem D.lnoilcap,  pairwise correlation(ar1)
-xtpcse civtot L.party_banvd polity2 unitary prsystem D.lnoilcap,  pairwise correlation(ar1)
+* Models with fd_n_attacks (With Political and Economic Controls):
+xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap if nomiss==1,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap if nomiss==1,  pairwise correlation(ar1)
 
-* Models with civtot (With Political, Economic, and Demographic Controls):
-xtpcse civtot L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop,  pairwise correlation(ar1)
-xtpcse civtot L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop,  pairwise correlation(ar1)
+* Models with fd_n_attacks (With Political, Economic, and Demographic Controls):
+xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  pairwise correlation(ar1)
 
-xtpcse civtot L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac ,  pairwise correlation(ar1)
-xtpcse civtot L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac ,  pairwise correlation(ar1)
-
-
-* Models with civtot (No Controls):
-xtpcse n_attacks L.partybaniep,  pairwise correlation(ar1)
-xtpcse n_attacks L.party_banvd,  pairwise correlation(ar1)
-
-* Models with civtot (With Political Controls):
-xtpcse n_attacks L.partybaniep polity2 unitary prsystem,  pairwise correlation(ar1)
-xtpcse n_attacks L.party_banvd polity2 unitary prsystem,  pairwise correlation(ar1)
-
-* Models with civtot (With Political and Economic Controls):
-xtpcse n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap,  pairwise correlation(ar1)
-xtpcse n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap,  pairwise correlation(ar1)
-
-* Models with civtot (With Political, Economic, and Demographic Controls):
-xtpcse n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop,  pairwise correlation(ar1)
-xtpcse n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop,  pairwise correlation(ar1)
-
-xtpcse n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac ,  pairwise correlation(ar1)
-xtpcse n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac ,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  pairwise correlation(ar1)
 
 
-*******************************************
+*********************************
+****** Fixed-effects AR(1) ******
+*********************************
 
-* OLS
-xtreg civtot banall polity2 i.lelecsystem ethfrac ln_oil ln_pop, fe
-* PCSE
-xtpcse civtot banall polity2 i.lelecsystem, pairwise correlation(ar1)
-xtpcse civtot banall polity2 i.lelecsystem ethfrac, pairwise correlation(ar1)
-xtpcse civtot banall polity2 i.lelecsystem ln_oil ln_pop, pairwise correlation(ar1)
-xtpcse civtot banall polity2 i.lelecsystem D.ethfrac ln_oil ln_pop, pairwise correlation(ar1) 
-xtpcse civtot banall polity2 i.lelecsystem  ln_oil ln_pop, pairwise correlation(ar1) 
-* xtregar
-xtregar civtot banall polity2 i.lelecsystem, fe
-xtregar civtot banall polity2 i.lelecsystem ethfrac, fe
-xtregar civtot banall polity2 i.lelecsystem ln_oil ln_pop, fe
-xtregar civtot banall polity2 i.lelecsystem D.ethfrac ln_oil ln_pop, fe
-xtregar civtot banall polity2 i.lelecsystem ethfrac ln_oil ln_pop, re
+* Models with fd_n_attacks (No Controls):
+xtregar fd_n_attacks L.partybaniep if nomiss==1, fe
+xtregar fd_n_attacks L.party_banvd if nomiss==1, fe 
 
-* Models with n_attacks:
-xtnbreg n_attacks banall polity2 i.lelecsystem, fe
-xtnbreg n_attacks banall polity2 i.lelecsystem ethfrac, fe
-xtnbreg n_attacks banall polity2 i.lelecsystem ln_oil ln_pop, fe
-xtnbreg n_attacks banall polity2 i.lelecsystem D.ethfrac ln_oil ln_pop, fe
-* OLS
-xtreg n_attacks banall polity2 i.lelecsystem, fe
-xtreg n_attacks banall polity2 i.lelecsystem ethfrac, fe
-xtreg n_attacks banall polity2 i.lelecsystem ln_oil ln_pop, fe
-xtreg n_attacks banall polity2 i.lelecsystem ethfrac ln_oil ln_pop, fe
-* PCSE
-xtpcse n_attacks banall polity2 i.lelecsystem, pairwise correlation(ar1)
-xtpcse n_attacks banall polity2 i.lelecsystem ethfrac, pairwise correlation(ar1)
-xtpcse n_attacks banall polity2 i.lelecsystem ln_oil ln_pop, pairwise correlation(ar1)
-xtpcse n_attacks banall polity2 i.lelecsystem D.ethfrac ln_oil ln_pop, pairwise correlation(ar1) 
-xtpcse n_attacks banall polity2 i.lelecsystem  ln_oil ln_pop, pairwise correlation(ar1) 
-* xtregar
-xtregar n_attacks L.banall L.n_attacks interaction polity2 i.lelecsystem, fe
-xtregar n_attacks L.banall L.n_attacks interaction polity2 i.lelecsystem ethfrac, fe
-xtregar n_attacks L.banall L.n_attacks interaction polity2 i.lelecsystem ln_oil ln_pop, fe
-xtregar n_attacks L.banall L.n_attacks interaction polity2 i.lelecsystem D.ethfrac ln_oil ln_pop, fe
-xtregar n_attacks banall L.n_attacks interaction polity2 i.lelecsystem ethfrac ln_oil ln_pop, re
+* Models with fd_n_attacks (With Political Controls):
+xtregar fd_n_attacks L.partybaniep polity2 unitary prsystem if nomiss==1, fe
+xtregar fd_n_attacks L.party_banvd polity2 unitary prsystem if nomiss==1, fe
+
+* Models with fd_n_attacks (With Political and Economic Controls):
+xtregar fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap if nomiss==1, fe
+xtregar fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap if nomiss==1, fe
+
+* Models with fd_n_attacks (With Political, Economic, and Demographic Controls):
+xtregar fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  fe
+xtregar fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1, fe
+
+xtregar fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1,  fe
+xtregar fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  fe
+
+
+*****************************************************************
+**************************** Level ******************************
+*****************************************************************
+
+*******************************
+****** Binomial Negative ******
+*******************************
+
+* Models with n_attacks (No Controls):
+xtnbreg n_attacks L.n_attacks L.partybaniep if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd if nomiss==1,  fe
+
+* Models with n_attacks (With Political Controls):
+xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem if nomiss==1, fe
+xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem if nomiss==1, fe
+
+* Models with n_attacks (With Political and Economic Controls):
+xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap if nomiss==1,  fe
+
+* Models with n_attacks (With Political, Economic, and Demographic Controls):
+xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  fe
+
+xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  fe
+
+
+
+*****************************************************************
+**************************** Dummy ******************************
+*****************************************************************
+
+* Mark no missing data
+mark nomiss2 
+markout nomiss2 d_civtot d_civtot partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac
+
+* Models with d_civtot (With Political, Economic, and Demographic Controls):
+xtlogit d_civtot L.d_civtot L.partybaniep polity2 unitary prsystem lnoilcap lnpop ethfrac if nomiss2==1,  fe
+xtlogit d_civtot L.d_civtot L.party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac if nomiss2==1 ,  fe
+
 
 
 ****************** Cross-Section Models************************

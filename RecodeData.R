@@ -10,6 +10,8 @@ library(foreign)
 library(readstata13)
 library(stringi)
 library(plm)
+library(car)
+library(dplyr)
 
 # Set Directory:
 wd <- "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
@@ -96,7 +98,7 @@ iep <- read.csv("IEP/IAEPv2_0_2015numeric.csv", sep = ",", header = TRUE, string
 # Keep only the variables of interest 
 varKeep <- c("cname", "cabr", "ccode", "year", 
              "banethnic", "banrelig", "bansys", "banall", 
-             "govstruct", "lelecsystem", "banned") 
+             "govstruct", "lelecsystem", "banned", "elecleg", "elecexec") 
 
 # Remove variables
 small_iep <- iep[,varKeep]
@@ -104,7 +106,7 @@ small_iep <- iep[,varKeep]
 # Rename variables
 names(small_iep) <- c("country_name", "country_abb", "cow_code", "year", 
                       "banethnic", "banrelig", "bansys", "banall", "govstruct", 
-                      "elecSystem", "partybanIEP")
+                      "elecSystem", "partybanIEP", "elecleg", "elecexec")
 
 # Recode variables
 # Unitary
@@ -112,7 +114,6 @@ small_iep$unitary <- recode(small_iep$govstruct, "1 = 1;
                                 2:3 = 0")
 # Proportional System
 small_iep$PRsystem <- recode(small_iep$elecSystem, "1=0; 2=0; else=1")
-
 
 ###############################################
 ########## Fearon and Laitin Data  ############
@@ -173,8 +174,12 @@ dataFinal <- merge(x = smalldata_vdem,
                    by.y = c("year", "cow_code"),
                    all.x = TRUE)
 
-# Remove variables with same names.
-dataFinal$country_name.y <- NULL
+# Merge MEPV
+dataFinal <- merge(x = dataFinal, 
+                   y = small_mepv, 
+                   by.x = c("year", "cow_code"), 
+                   by.y = c("year", "ccode"),
+                   all.x = TRUE)
 
 
 # Merge with IEP
@@ -193,15 +198,6 @@ dataFinal <- merge(x = dataFinal,
                    all.x = TRUE)
 
 
-# Merge MEPV
-dataFinal <- merge(x = dataFinal, 
-                   y = small_mepv, 
-                   by.x = c("year", "cow_code"), 
-                   by.y = c("year", "ccode"),
-                   all.x = TRUE)
-
-
-
 # Merge GDT data
 dataFinal <- merge(x = dataFinal, 
                    y = small_gtd, 
@@ -210,34 +206,52 @@ dataFinal <- merge(x = dataFinal,
                    all.x = TRUE)
 
 
-sum(complete.cases(dataFinal))
-for(i in 1:length(dataFinal)){
-   print(names(dataFinal)[i])
-   print(table(is.na(dataFinal[,i])))
+##########################################################
+########## Generate Variables and clean data  ############
+##########################################################
+
+# We still need to recover the countries names and add them to only one variable
+# Remove country variables names
+RemVar <- c("country_id", "country_abb.x", "country_abb.y",
+            "country", "cname", "country_name.y", "country_abb", 
+            "country_name", "country_name.x.1", "country_name.y")
+for(i in RemVar){
+   dataFinal[, i] <- NULL
 }
 
-sum(complete.cases(dataFinal))
-nrow(dataFinal)
+# Remove if cow_code is NA
+dataFinal <- dataFinal[!is.na(dataFinal$cow_code),] 
 
+# Rename country_name variable
+names(dataFinal)[3] <- "country_name"
 
-###########################################
 # The variable n_attacks does not contains 0. 
 # We have to add them.
 dataFinal$n_attacks[is.na(dataFinal$n_attacks)] <- 0
 
-###########################################
-########## Clean and save data  ###########
-###########################################
+# Order the dataset
+dataFinal <- dataFinal[order(dataFinal$cow_code, dataFinal$year),]
 
-# We still need to recover the countries names and add them to only one variable
-# Remove country variables names
-RemVar <- c("country_name.x", "country_abb.x", "country_name.x", "country_abb.y", 
-            "country_name.y", "country.y", "country_name.y", "country.x")
-for(i in RemVar){
-   dataFinal[, i] <- NULL
-}
-# Remove if cow_code is NA
-dataFinal<- dataFinal[!is.na(dataFinal$cow_code),] 
+# Generate First Difference n_attacks
+dataFinal <- dataFinal %>%
+   group_by(cow_code) %>%
+   mutate(fd_n_attacks = n_attacks - lag(n_attacks))
+
+# Generate Dummy with civtot
+dataFinal$d_civtot <- recode(dataFinal$civtot, "0=0; else=1")
+
+# Generate log(oilcap)
+dataFinal$lnoilcap <- log(dataFinal$oilHM/dataFinal$popHM + 1)
+
+# Generate log(population)
+dataFinal$lnpop <- log(dataFinal$popHM)
+
+# Remove countries that don't have elections
+dataFinal <- subset(dataFinal, subset = elecleg==1)
+
+#################################
+########## Save data  ###########
+#################################
 
 # Export to csv
 write.csv(dataFinal, file = "Analysis Files/dataFinal.csv")
@@ -262,4 +276,12 @@ summary(plm(civtot ~ banall + polity2 + factor(lelecsystem) +
                log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
             data = dataFinal, index=c("scode", "year"),  model="within"))
 
+sum(complete.cases(dataFinal))
+for(i in 1:length(dataFinal)){
+   print(names(dataFinal)[i])
+   print(table(is.na(dataFinal[,i])))
+}
+
+sum(complete.cases(dataFinal))
+nrow(dataFinal)
 
