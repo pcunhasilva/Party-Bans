@@ -16,6 +16,7 @@ library(dplyr)
 # Set Directory:
 wd <- "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
 setwd(wd)
+setwd("/Users/luweiying/Desktop/Comparative Party Politics/Party_Bans/DataAnalysis")
 
 ###############################
 ############ V-Dem ############
@@ -130,7 +131,23 @@ varKeep <- c("ccode", "country", "cname", "year", "ethfrac")
 # Remove variables
 small_ethnicdata <- ethnicdata[,varKeep]
 
+#####################################################
+########## CREG Ethnic Fractionalization ############
+#####################################################
 
+# Read data
+EthnicRaw <- read.csv("EthnicGroupsWide_v1.02.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+
+# Calculate the Ethnic Fractionalization Index
+EthnicRaw[,5:427][is.na(EthnicRaw[,5:427])] <- 0
+EthnicRaw[,5:427] <- EthnicRaw[,5:427]/100
+EthnicRaw$EthFrac <- apply(EthnicRaw[,5:427], 1, function(x) 1-sum(x^2))
+
+# Keep only the Ethnic Fractionalization Index
+EthnicFraction <- EthnicRaw[, -(5:427)]
+
+# Export to csv
+write.csv(EthnicFraction, file = "EthnicFraction.csv")
 
 ###################################################
 ############ Global Terrorism Database ############
@@ -205,6 +222,13 @@ dataFinal <- merge(x = dataFinal,
                    by.y = c("year", "cow_code"),
                    all.x = TRUE)
 
+# Merge Ethnic Fractionalization with other data
+dataFinal <- read.csv("dataFinal.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+dataFinal <- merge(x = dataFinal, 
+                   y = EthnicFraction, 
+                   by.x = c("year", "cow_code"), 
+                   by.y = c("Year", "Cowcode"),
+                   all.x = TRUE)
 
 ##########################################################
 ########## Generate Variables and clean data  ############
@@ -256,6 +280,8 @@ dataFinal <- subset(dataFinal, subset = elecleg==1)
 # Export to csv
 write.csv(dataFinal, file = "Analysis Files/dataFinal.csv")
 
+# Luwei Export
+write.csv(dataFinal, file = "dataFinal.csv")
 
 ###############################
 ########## Analysis ###########
