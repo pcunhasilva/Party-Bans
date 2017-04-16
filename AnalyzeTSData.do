@@ -7,7 +7,7 @@ cd "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/
 import delimited "dataFinal.csv", colrange(2) clear
  
 * Convert strings to numeric and deal with NA's
-foreach i of varlist oilhm civviol civtot ethviol ethfrac fd_n_attacks lnoilcap polity2 lnpop{
+foreach i of varlist oilhm civviol civtot ethviol ethfrac n_attacks partybanuni newethfrac fd_n_attacks lnoilcap polity2 lnpop{
 	 destring `i', replace force 
 	} 
 	
@@ -15,13 +15,16 @@ foreach i of varlist oilhm civviol civtot ethviol ethfrac fd_n_attacks lnoilcap 
 duplicates tag cow_code year, gen(isdup)
 drop if isdup==1
 
-
 * Difference of Means
 ttest d_civtot, by(partybaniep) 
 ttest d_civtot, by(party_banvd) 
+ttest d_civtot, by(partybanuni) 
 ttest fd_n_attacks, by(partybaniep) 
 ttest fd_n_attacks, by(party_banvd) 
-
+ttest fd_n_attacks, by(partybanuni)
+ttest n_attacks, by(partybaniep) 
+ttest n_attacks, by(party_banvd)
+ttest n_attacks, by(partybanuni) 
 
 * Set TSCS 
 tsset cow_code year
@@ -47,7 +50,7 @@ xtserial n_attacks party_banvd polity2 prsystem lnoilcap lnpop, output
 
 * Mark no missing data
 mark nomiss 
-markout nomiss n_attacks fd_n_attacks partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac
+markout nomiss n_attacks fd_n_attacks partybanuni partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop newethfrac
 
 
 *******************************
@@ -70,8 +73,8 @@ xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap if nomiss=
 xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  pairwise correlation(ar1)
 xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  pairwise correlation(ar1)
 
-xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1,  pairwise correlation(ar1)
-xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.newethfrac if nomiss==1,  pairwise correlation(ar1)
+xtpcse fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.newethfrac if nomiss==1 ,  pairwise correlation(ar1)
 
 
 *********************************
@@ -122,8 +125,10 @@ xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap 
 xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  fe
 xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop if nomiss==1,  fe
 
-xtnbreg n_attacks L.n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1,  fe
-xtnbreg n_attacks L.n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  fe
+xtnbreg n_attacks L.n_attacks L.partybaniep L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,  fe
+* Combined partybans
+xtnbreg n_attacks L.n_attacks L.partybanuni L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,  fe
 
 
 

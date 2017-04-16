@@ -14,9 +14,9 @@ library(car)
 library(dplyr)
 
 # Set Directory:
-wd <- "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
+wd <- "~/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
 setwd(wd)
-setwd("/Users/luweiying/Desktop/Comparative Party Politics/Party_Bans/DataAnalysis")
+# setwd("/Users/luweiying/Desktop/Comparative Party Politics/Party_Bans/DataAnalysis")
 
 ###############################
 ############ V-Dem ############
@@ -136,7 +136,8 @@ small_ethnicdata <- ethnicdata[,varKeep]
 #####################################################
 
 # Read data
-EthnicRaw <- read.csv("EthnicGroupsWide_v1.02.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+#EthnicRaw <- read.csv("EthnicGroupsWide_v1.02.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+EthnicRaw <- read.csv("AnaEthnicGroupsWide_v1.02.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
 
 # Calculate the Ethnic Fractionalization Index
 EthnicRaw[,5:427][is.na(EthnicRaw[,5:427])] <- 0
@@ -223,12 +224,19 @@ dataFinal <- merge(x = dataFinal,
                    all.x = TRUE)
 
 # Merge Ethnic Fractionalization with other data
-dataFinal <- read.csv("dataFinal.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+#dataFinal <- read.csv("dataFinal.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
+#dataFinal <- merge(x = dataFinal, 
+                   #y = EthnicFraction, 
+                   #by.x = c("year", "cow_code"), 
+                   #by.y = c("Year", "Cowcode"),
+                   #all.x = TRUE)
+EthnicFraction <- read.csv("Analysis Files/EthnicFraction.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
 dataFinal <- merge(x = dataFinal, 
                    y = EthnicFraction, 
                    by.x = c("year", "cow_code"), 
                    by.y = c("Year", "Cowcode"),
                    all.x = TRUE)
+
 
 ##########################################################
 ########## Generate Variables and clean data  ############
@@ -238,7 +246,7 @@ dataFinal <- merge(x = dataFinal,
 # Remove country variables names
 RemVar <- c("country_id", "country_abb.x", "country_abb.y",
             "country", "cname", "country_name.y", "country_abb", 
-            "country_name", "country_name.x.1", "country_name.y")
+            "country_name", "country_name.x.1", "country_name.y", "X", "Country")
 for(i in RemVar){
    dataFinal[, i] <- NULL
 }
@@ -251,7 +259,7 @@ names(dataFinal)[3] <- "country_name"
 
 # The variable n_attacks does not contains 0. 
 # We have to add them.
-dataFinal$n_attacks[is.na(dataFinal$n_attacks)] <- 0
+dataFinal$n_attacks[is.na(dataFinal$n_attacks) & dataFinal$year!=1993] <- 0
 
 # Order the dataset
 dataFinal <- dataFinal[order(dataFinal$cow_code, dataFinal$year),]
@@ -273,6 +281,16 @@ dataFinal$lnpop <- log(dataFinal$popHM)
 # Remove countries that don't have elections
 dataFinal <- subset(dataFinal, subset = elecleg==1)
 
+# Rename new EthFrac variable
+names(dataFinal)[28] <- "NewEthFrac"
+
+# Generate unified partybans
+dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==1), 1, 
+                                ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==0), 0,
+                                       ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==0),
+                                       0, ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==1),
+                                                 0, NA))))
+
 #################################
 ########## Save data  ###########
 #################################
@@ -281,7 +299,7 @@ dataFinal <- subset(dataFinal, subset = elecleg==1)
 write.csv(dataFinal, file = "Analysis Files/dataFinal.csv")
 
 # Luwei Export
-write.csv(dataFinal, file = "dataFinal.csv")
+#write.csv(dataFinal, file = "dataFinal.csv")
 
 ###############################
 ########## Analysis ###########
