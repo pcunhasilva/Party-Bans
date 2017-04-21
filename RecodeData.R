@@ -56,14 +56,14 @@ data_qgov <- read.csv("QoG/qog_std_ts_jan17.csv", sep = ",", header = TRUE, stri
 # Our main goal with this dataset is to recover different country codes.
 
 # Keep variables of interest
-varKeep <- c("ccode", "cname", "year", "ccodealp","ccodecow", "ccodewb") 
+varKeep <- c("ccode", "cname", "year", "ccodealp","ccodecow", "ccodewb", "chga_demo", "ht_region") 
 
 # Remove variables and save the final version
 smalldata_qgov <- data_qgov[,varKeep]
 
 # Rename variables
 names(smalldata_qgov) <- c("ccode", "country_name", "year", "ccodealp", "cow_code",
-                           "code_wb")
+                           "code_wb", "dd_cga", "ht_region")
 
 ##############################
 ############ MEPV ############
@@ -140,15 +140,15 @@ small_ethnicdata <- ethnicdata[,varKeep]
 EthnicRaw <- read.csv("AnaEthnicGroupsWide_v1.02.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
 
 # Calculate the Ethnic Fractionalization Index
-EthnicRaw[,5:427][is.na(EthnicRaw[,5:427])] <- 0
-EthnicRaw[,5:427] <- EthnicRaw[,5:427]/100
-EthnicRaw$EthFrac <- apply(EthnicRaw[,5:427], 1, function(x) 1-sum(x^2))
+#EthnicRaw[,5:427][is.na(EthnicRaw[,5:427])] <- 0
+#EthnicRaw[,5:427] <- EthnicRaw[,5:427]/100
+#EthnicRaw$EthFrac <- apply(EthnicRaw[,5:427], 1, function(x) 1-sum(x^2))
 
 # Keep only the Ethnic Fractionalization Index
-EthnicFraction <- EthnicRaw[, -(5:427)]
+#EthnicFraction <- EthnicRaw[, -(5:427)]
 
 # Export to csv
-write.csv(EthnicFraction, file = "EthnicFraction.csv")
+#write.csv(EthnicFraction, file = "EthnicFraction.csv")
 
 ###################################################
 ############ Global Terrorism Database ############
@@ -282,7 +282,7 @@ dataFinal$lnpop <- log(dataFinal$popHM)
 dataFinal <- subset(dataFinal, subset = elecleg==1)
 
 # Rename new EthFrac variable
-names(dataFinal)[28] <- "NewEthFrac"
+names(dataFinal)[30] <- "NewEthFrac"
 
 # Generate unified partybans
 dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==1), 1, 
