@@ -4,10 +4,10 @@ set more off
 cd "/Users/patrickcunhasilva/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/Analysis Files"
 
 * Load data
-import delimited "dataFinal.csv", colrange(2) clear
+use datafinal, clear
  
 * Convert strings to numeric and deal with NA's
-foreach i of varlist oilhm civviol civtot ethviol ethfrac n_attacks partybanuni newethfrac fd_n_attacks lnoilcap polity2 lnpop{
+foreach i of varlist  unitary {
 	 destring `i', replace force 
 	} 
 	
@@ -37,11 +37,12 @@ xtfisher lnoilcap, lags(2) // Has unit root.
 xtfisher ethfrac, lags(2) // Has unit root.
 
 * Testing serial correlation
-xtserial civtot banall polity2 prsystem lnoilcap lnpop, output
-xtserial n_attacks banall polity2 prsystem lnoilcap lnpop, output
+xtserial civtot partybaniep polity2 prsystem lnoilcap lnpop, output
+xtserial n_attacks partybaniep polity2 prsystem lnoilcap lnpop, output
 xtserial civtot party_banvd polity2 prsystem lnoilcap lnpop, output
 xtserial n_attacks party_banvd polity2 prsystem lnoilcap lnpop, output
 
+xtserial fd_n_attacks partybaniep prsystem  lnoilcap lnpop
 
 
 ***************************************************************************
@@ -50,7 +51,7 @@ xtserial n_attacks party_banvd polity2 prsystem lnoilcap lnpop, output
 
 * Mark no missing data
 mark nomiss 
-markout nomiss n_attacks fd_n_attacks partybanuni partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop newethfrac
+markout nomiss n_attacks dd_cga fd_n_attacks partybanuni partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop newethfrac
 
 
 *******************************
@@ -101,6 +102,10 @@ xtregar fd_n_attacks L.partybaniep polity2 unitary prsystem D.lnoilcap lnpop D.e
 xtregar fd_n_attacks L.party_banvd polity2 unitary prsystem D.lnoilcap lnpop D.ethfrac if nomiss==1 ,  fe
 
 
+xtregar n_attacks L.n_attacks L.partybanuni L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,  fe
+xtpcse n_attacks L.n_attacks L.partybanuni L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,   pairwise correlation(ar1)
+xtreg n_attacks L.n_attacks L.partybanuni L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 
+
 *****************************************************************
 **************************** Level ******************************
 *****************************************************************
@@ -130,6 +135,9 @@ xtnbreg n_attacks L.n_attacks L.party_banvd L.polity2 L.unitary L.prsystem L.lno
 * Combined partybans
 xtnbreg n_attacks L.n_attacks L.partybanuni L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,  fe
 
+* Models with n_attacks (With Political, Economic, and Demographic Controls, and DD):
+xtnbreg n_attacks L.n_attacks L.partybaniep L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1,  fe
+xtnbreg n_attacks L.n_attacks L.party_banvd L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss==1 ,  fe
 
 
 *****************************************************************
@@ -138,11 +146,29 @@ xtnbreg n_attacks L.n_attacks L.partybanuni L.polity2 L.unitary L.prsystem L.lno
 
 * Mark no missing data
 mark nomiss2 
-markout nomiss2 d_civtot d_civtot partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac
+markout nomiss2 d_civtot d_civtot dd_cga partybaniep party_banvd polity2 unitary prsystem lnoilcap lnpop newethfrac
 
 * Models with d_civtot (With Political, Economic, and Demographic Controls):
-xtlogit d_civtot L.d_civtot L.partybaniep polity2 unitary prsystem lnoilcap lnpop ethfrac if nomiss2==1,  fe
-xtlogit d_civtot L.d_civtot L.party_banvd polity2 unitary prsystem lnoilcap lnpop ethfrac if nomiss2==1 ,  fe
+xtlogit d_civtot L.d_civtot L.partybaniep L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1,  fe
+xtlogit d_civtot L.d_civtot L.party_banvd L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1 ,  fe
+
+* Combined partybans
+xtlogit d_civtot L.d_civtot L.partybanuni L.polity2 L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1 ,  fe
+
+* With DD
+xtlogit d_civtot L.d_civtot L.partybaniep L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1,  fe
+xtlogit d_civtot L.d_civtot L.party_banvd L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1 ,  fe
+
+* Combined partybans
+xtlogit d_civtot L.d_civtot L.partybanuni L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1 ,  fe
+
+
+**** Order Logit
+xtologit civtot L.civtot L.partybaniep L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1
+xtologit civtot L.civtot L.party_banvd L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1
+
+* Combined partybans
+xtologit civtot L.civtot L.partybanuni L.dd_cga L.unitary L.prsystem L.lnoilcap L.lnpop L.newethfrac if nomiss2==1
 
 
 
@@ -167,3 +193,49 @@ reg civtot banall i.lelecsystem polity2 ethfrac ln_oil ln_pop, robust
 nbreg n_attacks banall i.lelecsystem polity2 ethfrac ln_oil ln_pop
 nbreg civtot banall i.lelecsystem polity2 ethfrac ln_oil ln_pop
 restore
+
+
+*******************************************
+
+mark nomiss 
+markout nomiss n_attacks partybanuni partybanuni partybaniep party_banvd dd_cga unitary prsystem lnoilcap lnpop newethfrac
+
+
+tsset cow_code year
+
+gen oilcap = oilHM/popHM
+gen lnoilcap = ln(oilcap+0.0000001)
+
+gen lag_attack = L.n_attacks
+gen lag_partybanUni = L.partybanUni
+gen lag_partybanIEP = L.partybanIEP
+gen lag_party_banVD = L.party_banVD
+
+destring party_banvd, replace force
+
+by cow_code: gen cum_attacks=sum(n_attacks)
+
+* Combined partybans FE
+xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac, irr  fe
+
+xtnbreg n_attacks lag_attack  L.party_banvd dd_cga unitary prsystem lnoilcap lnpop newethfrac ,  irr fe
+
+xtnbreg n_attacks lag_attack  L.partybaniep dd_cga unitary prsystem lnoilcap lnpop newethfrac ,  irr fe
+estimates store femodel
+* Combined partybans RE
+xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac, irr  re
+
+xtnbreg n_attacks L.n_attacks  L.party_banvd dd_cga unitary prsystem lnoilcap lnpop newethfrac , irr re
+
+xtnbreg n_attacks L.n_attacks partybaniep L.partybaniep dd_cga unitary prsystem lnoilcap lnpop newethfrac , irr re
+
+
+hausman femodel .
+
+xtregar n_attacks L.n_attacks partybanuni L.partybanuni dd_cga unitary prsystem lnoilcap lnpop newethfrac,  fe
+
+reg n_attacks partybanuni
+
+gen dcum_attacks = D.cum_attacks
+
+xtserial n_attacks lag_attack   lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac

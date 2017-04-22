@@ -181,16 +181,77 @@ names(small_gtd) <- c("year", "ccodeGTD", "country", "n_attacks")
 # Add codes to terrorism data:
 source("Analysis Files/AddCodes.R")
 
+####################################
+############ Riots Data ############
+###################################
+
+# Read data
+Africa <- read.csv("Riots/SCAD_Africa_32_Update.csv", stringsAsFactors = FALSE, header = TRUE)
+LatAm <- read.csv("Riots/SCAD_LA_32.csv", stringsAsFactors = FALSE, header = TRUE)
+
+# Keep variables
+varKeep <- c("ccode", "styr", "etype")
+
+# Remove variables
+Africa_small <- Africa[,varKeep]
+LatAm_small <- LatAm[,varKeep]
+
+# Merge data
+small_riots <- rbind.fill(Africa_small, LatAm_small)
+
+# Select only riots against government
+small_riots <- small_riots[small_riots[,"etype"]==8,]
+
+# Colapse by year
+small_riots[, "riot"] <- 1
+small_riots <- ddply(.data = small_riots, .variables = c("styr", "ccode"), 
+                   .fun = summarize, n_riots = sum(riot))
+
 ###################################
 ########## Merge data  ############
 ###################################
 
-# Merge V-Dem with QoG
-dataFinal <- merge(x = smalldata_vdem, 
+dataFinal <- data.frame(cow_code = NA, year = NA)
+j <- 1
+for(t in 1970:2015){
+   for(i in unique(small_gtd$cow_code)){
+      dataFinal[j ,"cow_code"] <- i 
+      dataFinal[j ,"year"] <- t
+   j <- j + 1
+   }
+}
+dataFinal <- dataFinal[dataFinal[, "year"]!=1993,]
+# Remove if cow_code is NA
+dataFinal <- dataFinal[!is.na(dataFinal$cow_code),] 
+
+# Merge with GDT
+dataFinal <- merge(x = dataFinal, 
+                   y = small_gtd, 
+                   by.x = c("year", "cow_code"), 
+                   by.y = c("year", "cow_code"),
+                   all.x = TRUE)
+
+# Merge with V-Dem
+dataFinal <- merge(x = dataFinal, 
+                   y = smalldata_vdem, 
+                   by.x = c("year", "cow_code"), 
+                   by.y = c("year", "cow_code"),
+                   all.x = TRUE)
+
+# Merge with QoG
+dataFinal <- merge(x = dataFinal, 
                    y = smalldata_qgov, 
                    by.x = c("year", "cow_code"), 
                    by.y = c("year", "cow_code"),
                    all.x = TRUE)
+
+
+# Merge Riots
+#dataFinal <- merge(x = dataFinal, 
+#                   y = small_riots, 
+#                   by.x = c("year", "cow_code"), 
+#                   by.y = c("styr", "ccode"),
+#                   all.x = TRUE)
 
 # Merge MEPV
 dataFinal <- merge(x = dataFinal, 
@@ -209,19 +270,12 @@ dataFinal <- merge(x = dataFinal,
 
 
 # Merge Latin and Fearon
-dataFinal <- merge(x = dataFinal, 
-                   y = small_ethnicdata, 
-                   by.x = c("year", "cow_code"), 
-                   by.y = c("year", "ccode"),
-                   all.x = TRUE)
+#dataFinal <- merge(x = dataFinal, 
+#                   y = small_ethnicdata, 
+#                   by.x = c("year", "cow_code"), 
+#                   by.y = c("year", "ccode"),
+#                   all.x = TRUE)
 
-
-# Merge GDT data
-dataFinal <- merge(x = dataFinal, 
-                   y = small_gtd, 
-                   by.x = c("year", "cow_code"), 
-                   by.y = c("year", "cow_code"),
-                   all.x = TRUE)
 
 # Merge Ethnic Fractionalization with other data
 #dataFinal <- read.csv("dataFinal.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
@@ -244,22 +298,19 @@ dataFinal <- merge(x = dataFinal,
 
 # We still need to recover the countries names and add them to only one variable
 # Remove country variables names
-RemVar <- c("country_id", "country_abb.x", "country_abb.y",
-            "country", "cname", "country_name.y", "country_abb", 
+RemVar <- c("country_id", "country_abb.x", "country_abb.y", "country_name.x",
+            "country", "cname", "country_name.y", "country_abb", "country_name.y.1",
             "country_name", "country_name.x.1", "country_name.y", "X", "Country")
 for(i in RemVar){
    dataFinal[, i] <- NULL
 }
 
-# Remove if cow_code is NA
-dataFinal <- dataFinal[!is.na(dataFinal$cow_code),] 
-
 # Rename country_name variable
-names(dataFinal)[3] <- "country_name"
+names(dataFinal)[13] <- "country_name"
 
 # The variable n_attacks does not contains 0. 
 # We have to add them.
-dataFinal$n_attacks[is.na(dataFinal$n_attacks) & dataFinal$year!=1993] <- 0
+dataFinal$n_attacks[is.na(dataFinal$n_attacks)] <- 0
 
 # Order the dataset
 dataFinal <- dataFinal[order(dataFinal$cow_code, dataFinal$year),]
@@ -272,17 +323,11 @@ dataFinal <- dataFinal %>%
 # Generate Dummy with civtot
 dataFinal$d_civtot <- recode(dataFinal$civtot, "0=0; else=1")
 
-# Generate log(oilcap)
-dataFinal$lnoilcap <- log(dataFinal$oilHM/dataFinal$popHM + 1)
-
-# Generate log(population)
-dataFinal$lnpop <- log(dataFinal$popHM)
-
 # Remove countries that don't have elections
 dataFinal <- subset(dataFinal, subset = elecleg==1)
 
 # Rename new EthFrac variable
-names(dataFinal)[30] <- "NewEthFrac"
+names(dataFinal)[29] <- "NewEthFrac"
 
 # Generate unified partybans
 dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==1), 1, 
@@ -291,12 +336,14 @@ dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banV
                                        0, ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==1),
                                                  0, NA))))
 
+
 #################################
 ########## Save data  ###########
 #################################
 
 # Export to csv
 write.csv(dataFinal, file = "Analysis Files/dataFinal.csv")
+write.dta(dataFinal, file = "Analysis Files/dataFinal.dta")
 
 # Luwei Export
 #write.csv(dataFinal, file = "dataFinal.csv")
