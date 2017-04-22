@@ -205,6 +205,7 @@ tsset cow_code year
 
 gen oilcap = oilHM/popHM
 gen lnoilcap = ln(oilcap+0.0000001)
+gen lnpop = ln(popHM)
 
 gen lag_attack = L.n_attacks
 gen lag_partybanUni = L.partybanUni
@@ -218,23 +219,23 @@ by cow_code: gen cum_attacks=sum(n_attacks)
 * Combined partybans FE
 xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac, irr  fe
 
-xtnbreg n_attacks lag_attack  L.party_banvd dd_cga unitary prsystem lnoilcap lnpop newethfrac ,  irr fe
+xtnbreg n_attacks lag_attack  L.party_banVD dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac ,  irr fe
 
-xtnbreg n_attacks lag_attack  L.partybaniep dd_cga unitary prsystem lnoilcap lnpop newethfrac ,  irr fe
+xtnbreg n_attacks lag_attack  L.partybanIEP dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac ,  irr fe
 estimates store femodel
 * Combined partybans RE
 xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac, irr  re
 
-xtnbreg n_attacks L.n_attacks  L.party_banvd dd_cga unitary prsystem lnoilcap lnpop newethfrac , irr re
+xtnbreg n_attacks L.n_attacks  L.party_banVD dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac , irr re
 
-xtnbreg n_attacks L.n_attacks partybaniep L.partybaniep dd_cga unitary prsystem lnoilcap lnpop newethfrac , irr re
+xtnbreg n_attacks L.n_attacks partybanIEP L.partybanIEP dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac , irr re
 
 
 hausman femodel .
 
-xtregar n_attacks L.n_attacks partybanuni L.partybanuni dd_cga unitary prsystem lnoilcap lnpop newethfrac,  fe
+xtregar n_attacks L.n_attacks partybanUni lag_partybanUni dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac,  fe
 
-reg n_attacks partybanuni
+reg n_attacks partybanUni
 
 gen dcum_attacks = D.cum_attacks
 
