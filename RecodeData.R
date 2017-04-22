@@ -110,11 +110,16 @@ names(small_iep) <- c("country_name", "country_abb", "cow_code", "year",
                       "elecSystem", "partybanIEP", "elecleg", "elecexec")
 
 # Recode variables
+
+# Party bans
+small_iep$partybanIEP <- as.numeric(small_iep$partybanIEP)
+
 # Unitary
-small_iep$unitary <- recode(small_iep$govstruct, "1 = 1;
-                                2:3 = 0")
+small_iep$unitary <- as.numeric(recode(small_iep$govstruct, "1 = 1;
+                                2 = 0;
+                                3 = 0"))
 # Proportional System
-small_iep$PRsystem <- recode(small_iep$elecSystem, "1=0; 2=0; else=1")
+small_iep$PRsystem <- as.numeric(recode(small_iep$elecSystem, "1=0; 2=0; 3=1; 4=1"))
 
 ###############################################
 ########## Fearon and Laitin Data  ############
