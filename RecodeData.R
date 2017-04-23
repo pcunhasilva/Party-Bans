@@ -12,6 +12,8 @@ library(stringi)
 library(plm)
 library(car)
 library(dplyr)
+library(stargazer)
+library(countrycode)
 
 # Set Directory:
 wd <- "~/Google Drive/2. Academicos/6. Doutorado/Class/2017/Spring/PS 5262 - Comparative Party Politics/Data/"
@@ -352,6 +354,55 @@ write.dta(dataFinal, file = "Analysis Files/dataFinal.dta")
 
 # Luwei Export
 #write.csv(dataFinal, file = "dataFinal.csv")
+
+
+#######################################
+########## data Discription ###########
+#######################################
+dataFinal <- read.csv("dataFinal.csv", header=T)
+length(unique(dataFinal$cow_code)) #133
+length(unique(dataFinal$ccodealp)) #132 I don't know how these two different. I count the former as the number of countries.
+
+# Find any missing values
+apply(dataFinal, 2, function(x) sum(is.na(x)))
+
+# summary some critical variables
+stargazer(dataFinal)
+
+# Find the distribution of the countries
+continent <- table(countrycode(sourcevar=unique(dataFinal$cow_code), origin="cown", destination="continent", warn=T))
+# Use the Cowcode table to classify the unmatached cases: 260, 265, 345, 713. After that, plus 3 to Europe and 1 to Asia.
+COWcode <- read.csv("dataFinal.csv", header=T)
+
+# Institutions
+nrow(dataFinal[dataFinal$dd_cga==1,])
+nrow(dataFinal[dataFinal$dd_cga==0,])
+nrow(dataFinal[dataFinal$govstruct==1,])
+nrow(dataFinal[dataFinal$govstruct==2,])
+nrow(dataFinal[dataFinal$govstruct==3,])
+nrow(dataFinal[dataFinal$elecSystem==1,])
+nrow(dataFinal[dataFinal$elecSystem==2,])
+nrow(dataFinal[dataFinal$elecSystem==3,])
+nrow(dataFinal[dataFinal$elecSystem==4,])
+
+# An overview of party bans
+allKindsBans <- dataFinal[,c(5, 18, 19, 20, 21, 24)]
+sapply(allKindsBans, function(x) sum(!is.na(x)))
+colSums(allKindsBans) # Observations
+c(115, 181, 1172, 436)/4349 
+sum(na.omit(dataFinal$partybanIEP))
+1782/4340 # Proportion by IEP
+sum(na.omit(dataFinal$party_banVD))
+1495/4272 # Proportion by V-Dem
+sum(!is.na(dataFinal$dd_cga))
+
+# Differetiate between democracy and dictatorship
+Democ <- subset(dataFinal,dataFinal$dd_cga==1)
+Dictat <- subset(dataFinal,dataFinal$dd_cga==0)
+sum(na.omit(Democ[,24]))
+sum(na.omit(Dictat[,24]))
+table(dataFinal$dd_cga)
+
 
 ###############################
 ########## Analysis ###########
