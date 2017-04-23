@@ -377,13 +377,16 @@ COWcode <- read.csv("dataFinal.csv", header=T)
 # Institutions
 nrow(dataFinal[dataFinal$dd_cga==1,])
 nrow(dataFinal[dataFinal$dd_cga==0,])
-nrow(dataFinal[dataFinal$govstruct==1,])
-nrow(dataFinal[dataFinal$govstruct==2,])
-nrow(dataFinal[dataFinal$govstruct==3,])
-nrow(dataFinal[dataFinal$elecSystem==1,])
-nrow(dataFinal[dataFinal$elecSystem==2,])
-nrow(dataFinal[dataFinal$elecSystem==3,])
-nrow(dataFinal[dataFinal$elecSystem==4,])
+nrow(data[data$govstruct==1,])
+nrow(data[data$govstruct==2,])
+nrow(data[data$govstruct==3,])
+nrow(data[data$elecSystem==1,])
+nrow(data[data$elecSystem==2,])
+nrow(data[data$elecSystem==3,])
+nrow(data[data$elecSystem==4,])
+
+stargazer(data)
+
 
 # An overview of party bans
 allKindsBans <- dataFinal[,c(5, 18, 19, 20, 21, 24)]
@@ -402,6 +405,24 @@ Dictat <- subset(dataFinal,dataFinal$dd_cga==0)
 sum(na.omit(Democ[,24]))
 sum(na.omit(Dictat[,24]))
 table(dataFinal$dd_cga)
+
+# Correct data
+data <- read.dta13("dataRegressions.dta", convert.factors = FALSE)
+Democ <- subset(data,data$dd_cga==1)
+Dictat <- subset(data,data$dd_cga==0)
+apply(Democ[,c(17, 18, 19, 20, 23)], 2, function(x) sum(as.numeric(na.omit(x))))
+round(c(35, 26, 291, 8, 351)/1321 ,3)
+apply(Dictat[,c(17, 18, 19, 20, 23)], 2, function(x) sum(as.numeric(na.omit(x))))
+round(c(42, 93, 470, 183, 723)/1176 ,3)
+
+# Institutions
+nrow(dataFinal[dataFinal$govstruct==1,])
+nrow(dataFinal[dataFinal$govstruct==2,])
+nrow(dataFinal[dataFinal$govstruct==3,])
+nrow(dataFinal[dataFinal$elecSystem==1,])
+nrow(dataFinal[dataFinal$elecSystem==2,])
+nrow(dataFinal[dataFinal$elecSystem==3,])
+nrow(dataFinal[dataFinal$elecSystem==4,])
 
 
 ###############################
