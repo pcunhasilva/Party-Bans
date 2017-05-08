@@ -224,7 +224,7 @@ xtnbreg n_attacks lag_attack  L.party_banVD dd_cga unitary PRsystem lnoilcap lnp
 xtnbreg n_attacks lag_attack  L.partybanIEP dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac ,  irr fe
 estimates store femodel
 * Combined partybans RE
-xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem lnoilcap NewEthFrac, irr  re
+xtnbreg n_attacks lag_attack  lag_partybanUni dd_cga unitary PRsystem D.lnoilcap NewEthFrac if e(sample), irr  re
 
 xtnbreg n_attacks L.n_attacks  L.party_banVD dd_cga unitary PRsystem lnoilcap lnpop NewEthFrac , irr re
 
