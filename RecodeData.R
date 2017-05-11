@@ -118,8 +118,8 @@ small_iep$partybanIEP <- as.numeric(small_iep$partybanIEP)
 
 # Unitary
 small_iep$unitary <- as.numeric(recode(small_iep$govstruct, "1 = 1;
-                                2 = 0;
-                                3 = 0"))
+                                       2 = 0;
+                                       3 = 0"))
 # Proportional System
 small_iep$PRsystem <- as.numeric(recode(small_iep$elecSystem, "1=0; 2=0; 3=1; 4=1"))
 
@@ -180,7 +180,7 @@ small_gtd <- small_gtd[small_gtd[,"INT_LOG"]==0,]
 # Generate the cumulative sum of terrorist attacks per country year:
 small_gtd[, "attack"] <- 1
 small_gtd <- ddply(.data = small_gtd, .variables = c("iyear", "country", "country_txt"), 
-      .fun = summarize, n_attack = sum(attack))
+                   .fun = summarize, n_attack = sum(attack))
 
 # Recode variable names
 names(small_gtd) <- c("year", "ccodeGTD", "country", "n_attacks")
@@ -212,7 +212,7 @@ small_riots <- small_riots[small_riots[,"etype"]==8,]
 # Colapse by year
 small_riots[, "riot"] <- 1
 small_riots <- ddply(.data = small_riots, .variables = c("styr", "ccode"), 
-                   .fun = summarize, n_riots = sum(riot))
+                     .fun = summarize, n_riots = sum(riot))
 
 ###################################
 ########## Merge data  ############
@@ -221,11 +221,11 @@ small_riots <- ddply(.data = small_riots, .variables = c("styr", "ccode"),
 dataFinal <- data.frame(cow_code = NA, year = NA)
 j <- 1
 for(t in 1970:2015){
-   for(i in unique(small_gtd$cow_code)){
-      dataFinal[j ,"cow_code"] <- i 
-      dataFinal[j ,"year"] <- t
-   j <- j + 1
-   }
+  for(i in unique(small_gtd$cow_code)){
+    dataFinal[j ,"cow_code"] <- i 
+    dataFinal[j ,"year"] <- t
+    j <- j + 1
+  }
 }
 dataFinal <- dataFinal[dataFinal[, "year"]!=1993,]
 # Remove if cow_code is NA
@@ -287,10 +287,10 @@ dataFinal <- merge(x = dataFinal,
 # Merge Ethnic Fractionalization with other data
 #dataFinal <- read.csv("dataFinal.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
 #dataFinal <- merge(x = dataFinal, 
-                   #y = EthnicFraction, 
-                   #by.x = c("year", "cow_code"), 
-                   #by.y = c("Year", "Cowcode"),
-                   #all.x = TRUE)
+#y = EthnicFraction, 
+#by.x = c("year", "cow_code"), 
+#by.y = c("Year", "Cowcode"),
+#all.x = TRUE)
 EthnicFraction <- read.csv("Analysis Files/EthnicFraction.csv", sep = ",", header = TRUE, stringsAsFactors = FALSE)
 dataFinal <- merge(x = dataFinal, 
                    y = EthnicFraction, 
@@ -309,7 +309,7 @@ RemVar <- c("country_id", "country_abb.x", "country_abb.y", "country_name.x",
             "country", "cname", "country_name.y", "country_abb", "country_name.y.1",
             "country_name", "country_name.x.1", "country_name.y", "X", "Country")
 for(i in RemVar){
-   dataFinal[, i] <- NULL
+  dataFinal[, i] <- NULL
 }
 
 # Rename country_name variable
@@ -324,8 +324,8 @@ dataFinal <- dataFinal[order(dataFinal$cow_code, dataFinal$year),]
 
 # Generate First Difference n_attacks
 dataFinal <- dataFinal %>%
-   group_by(cow_code) %>%
-   mutate(fd_n_attacks = n_attacks - lag(n_attacks))
+  group_by(cow_code) %>%
+  mutate(fd_n_attacks = n_attacks - lag(n_attacks))
 
 # Generate Dummy with civtot
 dataFinal$d_civtot <- recode(dataFinal$civtot, "0=0; else=1")
@@ -340,8 +340,8 @@ names(dataFinal)[29] <- "NewEthFrac"
 dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==1), 1, 
                                 ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==0), 0,
                                        ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banVD==0),
-                                       0, ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==1),
-                                                 0, NA))))
+                                              0, ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==1),
+                                                        0, NA))))
 
 
 #################################
@@ -377,16 +377,13 @@ COWcode <- read.csv("dataFinal.csv", header=T)
 # Institutions
 nrow(dataFinal[dataFinal$dd_cga==1,])
 nrow(dataFinal[dataFinal$dd_cga==0,])
-nrow(data[data$govstruct==1,])
-nrow(data[data$govstruct==2,])
-nrow(data[data$govstruct==3,])
-nrow(data[data$elecSystem==1,])
-nrow(data[data$elecSystem==2,])
-nrow(data[data$elecSystem==3,])
-nrow(data[data$elecSystem==4,])
-
-stargazer(data)
-
+nrow(dataFinal[dataFinal$govstruct==1,])
+nrow(dataFinal[dataFinal$govstruct==2,])
+nrow(dataFinal[dataFinal$govstruct==3,])
+nrow(dataFinal[dataFinal$elecSystem==1,])
+nrow(dataFinal[dataFinal$elecSystem==2,])
+nrow(dataFinal[dataFinal$elecSystem==3,])
+nrow(dataFinal[dataFinal$elecSystem==4,])
 
 # An overview of party bans
 allKindsBans <- dataFinal[,c(5, 18, 19, 20, 21, 24)]
@@ -406,24 +403,6 @@ sum(na.omit(Democ[,24]))
 sum(na.omit(Dictat[,24]))
 table(dataFinal$dd_cga)
 
-# Correct data
-data <- read.dta13("dataRegressions.dta", convert.factors = FALSE)
-Democ <- subset(data,data$dd_cga==1)
-Dictat <- subset(data,data$dd_cga==0)
-apply(Democ[,c(17, 18, 19, 20, 23)], 2, function(x) sum(as.numeric(na.omit(x))))
-round(c(35, 26, 291, 8, 351)/1321 ,3)
-apply(Dictat[,c(17, 18, 19, 20, 23)], 2, function(x) sum(as.numeric(na.omit(x))))
-round(c(42, 93, 470, 183, 723)/1176 ,3)
-
-# Institutions
-nrow(dataFinal[dataFinal$govstruct==1,])
-nrow(dataFinal[dataFinal$govstruct==2,])
-nrow(dataFinal[dataFinal$govstruct==3,])
-nrow(dataFinal[dataFinal$elecSystem==1,])
-nrow(dataFinal[dataFinal$elecSystem==2,])
-nrow(dataFinal[dataFinal$elecSystem==3,])
-nrow(dataFinal[dataFinal$elecSystem==4,])
-
 
 ###############################
 ########## Analysis ###########
@@ -435,21 +414,20 @@ dataFinalComp <- dataFinal[complete.cases(dataFinal),]
 
 # OLS with attacks
 summary(plm(n_attacks ~ banall + polity2 + factor(lelecsystem) + 
-               log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
+              log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
             data = dataFinal, index=c("scode", "year"),  model="within"))
 # Ethnic has unit root.
 
 # OLS with attacks
 summary(plm(civtot ~ banall + polity2 + factor(lelecsystem) + 
-               log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
+              log(oil_gas_valuePOP_2000 + 1) + log(pop_maddison + 1), 
             data = dataFinal, index=c("scode", "year"),  model="within"))
 
 sum(complete.cases(dataFinal))
 for(i in 1:length(dataFinal)){
-   print(names(dataFinal)[i])
-   print(table(is.na(dataFinal[,i])))
+  print(names(dataFinal)[i])
+  print(table(is.na(dataFinal[,i])))
 }
 
 sum(complete.cases(dataFinal))
 nrow(dataFinal)
-
