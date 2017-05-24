@@ -6,7 +6,7 @@
 library(mvctm)
 
 ## Read terrorist attacks dataset
-attacks <- read.csv("dataFinal.csv", stringsAsFactors = FALSE, header = TRUE)
+attacks <- read.csv("Analysis Files/dataFinal.csv", stringsAsFactors = FALSE, header = TRUE)
 
 ## Generate oil measure
 attacks$oilpop <- log(((attacks$oilHM * 1000000000)/attacks$popHM)+1)
@@ -50,7 +50,7 @@ meanY <- rowMeans(exp(results))
 ## Get 95% confidence interval for each value of polity
 CI <- matrix(NA, ncol = 2, nrow = 20)
 for(i in 1:20){
-   orderMatrix <- order(exp(results)[1,])
+   orderMatrix <- order(exp(results)[i,])
    CI[i, 1] <- exp(results[i,])[orderMatrix][25]
    CI[i, 2] <- exp(results[i,])[orderMatrix][975]
 }
@@ -72,7 +72,7 @@ for (i in -9:10){
 CI2 <- matrix(NA, ncol = 2, nrow = 20)
 meanY2 <- rowMeans(exp(results2))
 for(i in 1:20){
-   orderMatrix <- order(exp(results2)[1,])
+   orderMatrix <- order(exp(results2)[i,])
    CI2[i, 1] <- exp(results2[i,])[orderMatrix][25]
    CI2[i, 2] <- exp(results2[i,])[orderMatrix][975]
 }
@@ -135,7 +135,7 @@ for (i in -9:10){
 CI <- matrix(NA, ncol = 2, nrow = 20)
 meanY <- rowMeans(exp(results2))
 for(i in 1:20){
-   orderMatrix <- order(exp(results2)[1,])
+   orderMatrix <- order(exp(results2)[i,])
    CI[i, 1] <- exp(results2[i,])[orderMatrix][25]
    CI[i, 2] <- exp(results2[i,])[orderMatrix][975]
 }
@@ -156,7 +156,7 @@ for (i in -9:10){
 CI2 <- matrix(NA, ncol = 2, nrow = 20)
 meanY2 <- rowMeans(exp(results2))
 for(i in 1:20){
-   orderMatrix <- order(exp(results2)[1,])
+   orderMatrix <- order(exp(results2)[i,])
    CI2[i, 1] <- exp(results2[i,])[orderMatrix][25]
    CI2[i, 2] <- exp(results2[i,])[orderMatrix][975]
 }
@@ -215,7 +215,7 @@ for (i in -9:10){
 CI <- matrix(NA, ncol = 2, nrow = 20)
 meanY <- rowMeans(exp(results3))
 for(i in 1:20){
-   orderMatrix <- order(exp(results3)[1,])
+   orderMatrix <- order(exp(results3)[i,])
    CI[i, 1] <- exp(results3[i,])[orderMatrix][25]
    CI[i, 2] <- exp(results3[i,])[orderMatrix][975]
 }
@@ -236,7 +236,7 @@ for (i in -9:10){
 CI2 <- matrix(NA, ncol = 2, nrow = 20)
 meanY2 <- rowMeans(exp(results3))
 for(i in 1:20){
-   orderMatrix <- order(exp(results3)[1,])
+   orderMatrix <- order(exp(results3)[i,])
    CI2[i, 1] <- exp(results3[i,])[orderMatrix][25]
    CI2[i, 2] <- exp(results3[i,])[orderMatrix][975]
 }

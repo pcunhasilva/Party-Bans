@@ -9,7 +9,7 @@ library(readxl)
 library(foreign)
 library(readstata13)
 library(stringi)
-library(plm)
+library(interplot)
 library(car)
 library(dplyr)
 library(readxl)
@@ -226,7 +226,7 @@ meanY <- rowMeans(exp(results))
 ## Get 95% confidence interval for each value of polity
 CI <- matrix(NA, ncol = 2, nrow = 20)
 for(i in 1:20){
-   orderMatrix <- order(exp(results)[1,])
+   orderMatrix <- order(exp(results)[i,])
    CI[i, 1] <- exp(results[i,])[orderMatrix][25]
    CI[i, 2] <- exp(results[i,])[orderMatrix][975]
 }
@@ -246,7 +246,7 @@ for (i in -9:10){
 CI2 <- matrix(NA, ncol = 2, nrow = 20)
 meanY2 <- rowMeans(exp(results2))
 for(i in 1:20){
-   orderMatrix <- order(exp(results2)[1,])
+   orderMatrix <- order(exp(results2)[i,])
    CI2[i, 1] <- exp(results2[i,])[orderMatrix][25]
    CI2[i, 2] <- exp(results2[i,])[orderMatrix][975]
 }
@@ -312,7 +312,7 @@ meanY <- rowMeans(exp(results))
 ## Get 95% confidence interval for each value of polity
 CI <- matrix(NA, ncol = 2, nrow = 20)
 for(i in 1:20){
-   orderMatrix <- order(exp(results)[1,])
+   orderMatrix <- order(exp(results)[i,])
    CI[i, 1] <- exp(results[i,])[orderMatrix][25]
    CI[i, 2] <- exp(results[i,])[orderMatrix][975]
 }
@@ -332,7 +332,7 @@ for (i in -9:10){
 CI2 <- matrix(NA, ncol = 2, nrow = 20)
 meanY2 <- rowMeans(exp(results2))
 for(i in 1:20){
-   orderMatrix <- order(exp(results2)[1,])
+   orderMatrix <- order(exp(results2)[i,])
    CI2[i, 1] <- exp(results2[i,])[orderMatrix][25]
    CI2[i, 2] <- exp(results2[i,])[orderMatrix][975]
 }
@@ -361,3 +361,6 @@ for(i in -9:10){
 
 legend('topright',pch=c(20,18),col=c('red','blue'),
        legend=c('Party Ban', 'No Party Ban'), bty='n')
+
+interplot(model, "partybanUni", "polity2")
+interplot(model, "polity2", "partybanUni")
