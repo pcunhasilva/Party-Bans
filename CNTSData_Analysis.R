@@ -178,9 +178,15 @@ dataFinal$partybanUni <- ifelse((dataFinal$partybanIEP==1 & dataFinal$party_banV
                                               0, ifelse((dataFinal$partybanIEP==0 & dataFinal$party_banVD==1),
                                                         0, NA))))
 
+# Save the dataset
+write.csv(dataFinal, "dataFinalMargit.csv")
+
+
 #################################################
 ############### Run the models ##################
 #################################################
+
+dataFinal <- read.csv("dataFinalMargit.csv", header = TRUE, stringsAsFactors = FALSE)
 
 ## Generate oil measure
 dataFinal$oilpop <- log(((dataFinal$oilHM * 1000000000)/dataFinal$popHM)+1)
@@ -362,5 +368,98 @@ for(i in -9:10){
 legend('topright',pch=c(20,18),col=c('red','blue'),
        legend=c('Party Ban', 'No Party Ban'), bty='n')
 
+#############################################
+#############################################
+#############################################
+#############################################
+# This is the part used to run the Negative Binomial attempts. 
+
 interplot(model, "partybanUni", "polity2")
 interplot(model, "polity2", "partybanUni")
+
+modelnb<-glm.nb(riots ~ lag_riots + partybanUni*polity2 + PRsystem +
+              NewEthFrac + unitary + oilpop, data = subset(dataFinal, year>1969))
+
+new<-glm.convert(modelnb)
+
+interplot(new, "partybanUni", "polity2")
+
+###########################################
+modelnb <- glm.nb(n_attacks ~ lag_nattacks + partybanUni*polity2 + PRsystem +
+                NewEthFrac + unitary + oilpop, data = attacks, maxit=100)
+new<-glm.convert(modelnb)
+
+interplot(new, "partybanUni", "polity2")
+
+###########################################
+modelnb <- glm.nb(antigov ~ lag_antigov + partybanUni*polity2 + PRsystem +
+                     NewEthFrac + unitary + oilpop, data = dataFinal, maxit=100)
+new<-glm.convert(modelnb)
+
+interplot(new, "partybanUni", "polity2")
+
+#########################################
+# This is the attempt with the zero inflated
+library(pscl)
+zi_anti <- zeroinfl(antigov ~ lag_antigov + partybanUni*polity2 + PRsystem +
+            NewEthFrac + unitary + oilpop| 
+               polity2, data = dataFinal,
+             dist = "negbin", EM = FALSE)
+p1 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_antigov = mean(lag_antigov),
+                                                                 partybanUni = 1, 
+                                                                 polity2 = seq(-9,10),
+                                                                 PRsystem = 1,
+                                                                 NewEthFrac =  mean(NewEthFrac),
+                                                                 unitary = 0, 
+                                                                 oilpop = mean(oilpop))))
+p0 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_antigov = mean(lag_antigov),
+                                                                       partybanUni = 0, 
+                                                                       polity2 = seq(-9,10),
+                                                                       PRsystem = 1,
+                                                                       NewEthFrac =  mean(NewEthFrac),
+                                                                       unitary = 0, 
+                                                                       oilpop = mean(oilpop))))
+
+
+zi_anti <- zeroinfl(riots ~ lag_riots + partybanUni*polity2 + PRsystem +
+                       NewEthFrac + unitary + oilpop| 
+                       polity2, data = dataFinal,
+                    dist = "negbin", EM = FALSE)
+p1 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_riots = mean(lag_riots),
+                                                                       partybanUni = 1, 
+                                                                       polity2 = seq(-9,10),
+                                                                       PRsystem = 1,
+                                                                       NewEthFrac =  mean(NewEthFrac),
+                                                                       unitary = 0, 
+                                                                       oilpop = mean(oilpop))))
+p0 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_riots = mean(lag_riots),
+                                                                       partybanUni = 0, 
+                                                                       polity2 = seq(-9,10),
+                                                                       PRsystem = 1,
+                                                                       NewEthFrac =  mean(NewEthFrac),
+                                                                       unitary = 0, 
+                                                                       oilpop = mean(oilpop))))
+plot(x = -9:10, y = p1, type = "l", col = "red")
+lines(x = -9:10, y = p0, col = "blue")
+
+
+zi_anti <- zeroinfl(n_attacks ~ lag_nattacks + partybanUni*polity2 + PRsystem +
+                       NewEthFrac + unitary + oilpop| 
+                       polity2, data = attacks,
+                    dist = "negbin", EM = FALSE)
+p1 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_nattacks = mean(lag_nattacks),
+                                                                       partybanUni = 1, 
+                                                                       polity2 = seq(-9,10),
+                                                                       PRsystem = 1,
+                                                                       NewEthFrac =  mean(NewEthFrac),
+                                                                       unitary = 0, 
+                                                                       oilpop = mean(oilpop))))
+p0 <- predict(zi_anti, newdata = with(model.frame(zi_anti), data.frame(lag_nattacks = mean(lag_nattacks),
+                                                                       partybanUni = 0, 
+                                                                       polity2 = seq(-9,10),
+                                                                       PRsystem = 1,
+                                                                       NewEthFrac =  mean(NewEthFrac),
+                                                                       unitary = 0, 
+                                                                       oilpop = mean(oilpop))))
+plot(x = -9:10, y = p1, type = "l", col = "red")
+lines(x = -9:10, y = p0, col = "blue")
